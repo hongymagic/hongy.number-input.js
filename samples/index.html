@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<title>non-standard angular input[number] demo</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+	</head>
+	<body ng-cloak ng-app="sample">
+
+		<form name="sample" ng-controller="SampleCtrl">
+			<fieldset>
+				<legend>Basic example</legend>
+				<input id="years" name="years" type="tel" data-ng-model="years" data-number required>
+				{{ typeOfYears }}
+			</fieldset>
+			<fieldset>
+				<legend>Decimal example</legend>
+				<input id="price" name="price" type="tel" data-ng-model="price" data-number data-precision="2">
+				{{ typeOfPrice }}
+			</fieldset>
+			<fieldset>
+				<legend>Precision example</legend>
+				<input id="time" name="time" type="tel" data-ng-model="time" data-number data-precision="4">
+				{{ typeOfTime }}
+			</fieldset>
+			<fieldset>
+				<legend>Validation example</legend>
+				<input id="deposit" name="deposit" type="tel" data-ng-model="deposit" data-number data-precision="2" data-min="0" data-max="price">
+				{{ typeOfDeposit }}
+			</fieldset>
+		</form>
+
+		<script src="../components/jquery/dist/jquery.min.js"></script>
+		<script src="../components/angular/angular.min.js"></script>
+		<script src="../dist/hongy.input.js"></script>
+		<script>
+			angular
+			.module('sample', ['hongy'])
+			.controller('SampleCtrl', ['$scope', function ($scope) {
+				$scope.years = 5;
+				$scope.typeOfYears = typeof $scope.years;
+				$scope.price = 122.95;
+				$scope.typeOfPrice = typeof $scope.price;
+				$scope.time = 122.3412;
+				$scope.typeOfTime = typeof $scope.time;
+				$scope.deposit = 200000.50;
+				$scope.typeOfDeposit = typeof $scope.deposit;
+			}]);
+		</script>
+	</body>
+</html>
