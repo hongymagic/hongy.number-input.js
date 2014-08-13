@@ -19,10 +19,8 @@ module.exports = function () {
 
 		// list of files / patterns to load in the browser
 		files: [
-			'components/jquery/dist/jquery.js',
 			'components/angular/angular.js',
-			'components/angular-mocks/angular-mocks.js',
-			'number-input.js',
+			'src/**/*.js',
 			'test/spec/**/*.js'
 		],
 
@@ -59,13 +57,6 @@ module.exports = function () {
 		colors: true,
 
 		reporters: isTeamCity ? ['teamcity'] : ['spec']
-
-		// Uncomment the following lines if you are using grunt's server to run the tests
-		// proxies: {
-		//   '/': 'http://localhost:9000/'
-		// },
-		// URL root prevent conflicts with the site root
-		// urlRoot: '_karma_'
 	};
 };
 

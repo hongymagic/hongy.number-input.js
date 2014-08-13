@@ -5,29 +5,63 @@
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<title>non-standard angular input[number] demo</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link href="//maxcdn.bootstrapcdn.com/bootswatch/3.2.0/superhero/bootstrap.min.css" rel="stylesheet">
 	</head>
-	<body ng-cloak ng-app="sample">
+	<body class="container" ng-cloak ng-app="sample">
 
-		<form name="sample" ng-controller="SampleCtrl">
+		<form name="form" ng-controller="SampleCtrl">
 			<fieldset>
-				<legend>Basic example</legend>
-				<input id="years" name="years" type="tel" data-ng-model="years" data-number required>
-				{{ typeOfYears }}
-			</fieldset>
-			<fieldset>
-				<legend>Decimal example</legend>
-				<input id="price" name="price" type="tel" data-ng-model="price" data-number data-precision="2">
-				{{ typeOfPrice }}
-			</fieldset>
-			<fieldset>
-				<legend>Precision example</legend>
-				<input id="time" name="time" type="tel" data-ng-model="time" data-number data-precision="4">
-				{{ typeOfTime }}
-			</fieldset>
-			<fieldset>
-				<legend>Validation example</legend>
-				<input id="deposit" name="deposit" type="tel" data-ng-model="deposit" data-number data-precision="2" data-min="0" data-max="price">
-				{{ typeOfDeposit }}
+				<legend>Dumb mortgage calculator</legend>
+
+				<div class="row form-group">
+					<div class="col-sm-2">
+						<label for="price">Propery price</label>
+					</div>
+					<div class="col-sm-10">
+						<input
+							id="price"
+							name="price"
+							type="text"
+							class="form-control"
+							placeholder="930000"
+							required
+							data-ng-model="mortgage.price"
+							data-number
+							data-precision="2"
+							data-min="0"
+							data-max="25000000" />
+						<ul ng-show="form.price.$dirty && form.price.$invalid">
+							<li ng-show="form.price.$error.required">Required</li>
+							<li ng-show="form.price.$error.number">Not a number</li>
+							<li ng-show="form.price.$error.min">Lower than the required minimum</li>
+							<li ng-show="form.price.$error.max">Higher than the required maximum</li>
+						</ul>
+					</div>
+				</div>
+
+				<div class="row form-group">
+					<div class="col-sm-2">
+						<label for="deposit">How much deposit?</label>
+					</div>
+					<div class="col-sm-10">
+						<input
+							id="deposit"
+							name="deposit"
+							type="text"
+							class="form-control"
+							required
+							data-ng-model="mortgage.deposit"
+							data-number
+							data-precision="2"
+							data-min="0"
+							data-max="mortgage.price" />
+						<ul ng-show="form.deposit.$dirty && form.deposit.$invalid">
+							<li ng-show="form.deposit.$error.required">Required</li>
+							<li ng-show="form.deposit.$error.number">Not a number</li>
+							<li ng-show="form.deposit.$error.min">Lower than the required minimum</li>
+							<li ng-show="form.deposit.$error.max">Higher than the property price</li>
+						</ul>
+					</div>
 			</fieldset>
 		</form>
 
@@ -38,11 +72,23 @@
 			angular
 			.module('sample', ['hongy'])
 			.controller('SampleCtrl', ['$scope', function ($scope) {
+				$scope.mortgage = {
+					price: 400,
+					deposit: 200
+				};
+
+				$scope.settings = {
+					precision: 2,
+					min: 0,
+					max: 100
+				};
+
 				$scope.years = 5;
 				$scope.typeOfYears = typeof $scope.years;
 				$scope.price = 122.95;
 				$scope.typeOfPrice = typeof $scope.price;
 				$scope.time = 122.3412;
+				$scope.time2 = 122.3412;
 				$scope.typeOfTime = typeof $scope.time;
 				$scope.deposit = 200000.50;
 				$scope.typeOfDeposit = typeof $scope.deposit;

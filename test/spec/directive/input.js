@@ -1,6 +1,7 @@
 'use strict';
 
-describe('ngInput[number]', function () {
+describe('input[number]', function () {
+	/*
 	var html = [
 		'<form name="form">',
 			'<input id="price" name="price" type="tel" number min="0" max="1000000" ng-model="model.price" required />',
@@ -80,4 +81,5 @@ describe('ngInput[number]', function () {
 			expect(form.price.$error.required).toBe(false);
 		});
 	});
+	*/
 });

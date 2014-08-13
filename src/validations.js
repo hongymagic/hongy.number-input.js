@@ -1,6 +1,7 @@
+ /* global curry: true */
+
 // Standard HTML5 number regex
 var NUMBER_REGEXP = /^\s*(\-|\+)?(\d+|(\d*(\.\d*)))\s*$/;
-
 
 /**
  * @description
@@ -12,10 +13,10 @@ var NUMBER_REGEXP = /^\s*(\-|\+)?(\d+|(\d*(\.\d*)))\s*$/;
  * @param {any} value Value of the model.
  * @returns {any} Returns the valid value otherwise, undefined.
  */
-function validate(ctrl, name, validity, value) {
+var validate = curry(function (ctrl, name, validity, value) {
 	ctrl.$setValidity(name, validity);
 	return validity ? value : undefined;
-}
+});
 
 /**
  * @description
@@ -26,9 +27,9 @@ function validate(ctrl, name, validity, value) {
  * @param {any} value Value of the model.
  * @returns {any} Returns the valid value otherwise, undefined.
  */
-function numberValidator(ctrl, value) {
-	return validate(ctrl, 'number', NUMBER_REGEXP.test(value), value);
-}
+var numberValidator = curry(function (ctrl, value) {
+	return validate(ctrl, 'number', ctrl.$isEmpty(value) || NUMBER_REGEXP.test(value), value);
+});
 
 /**
  * @description
@@ -37,13 +38,14 @@ function numberValidator(ctrl, value) {
  * validity.
  *
  * @param {NgModelController} ctrl Controller of the bound model.
- * @param {number} min Minimum permissible value of the model.
+ * @param {number} min Function which returns minimum permissible value of the model.
  * @param {any} value Value of the model.
  * @returns {any} Returns the valid value otherwise, undefined.
  */
-function minValidator(ctrl, min, value) {
-	return validate(ctrl, 'min', value >= min, value);
-}
+var minValidator = curry(function (ctrl, min, value) {
+	var minValue = min();
+	return !angular.isNumber(minValue) ? ctrl.$viewValue : validate(ctrl, 'min', ctrl.$isEmpty(value) || value >= minValue, value);
+});
 
 /**
  * @description
@@ -51,10 +53,11 @@ function minValidator(ctrl, min, value) {
  * maximum number. Internally sets the given NgModelController's validity.
  *
  * @param {NgModelController} ctrl Controller of the bound model.
- * @param {number} max Maximum permissible value of the model.
+ * @param {function} max Function which returns maximum permissible value.
  * @param {any} value Value of the model.
  * @returns {any} Returns the valid value otherwise, undefined.
  */
-function maxValidator(ctrl, max, value) {
-	return validate(ctrl, 'max', value <= max, value);
-}
+var maxValidator = curry(function (ctrl, max, value) {
+	var maxValue = max();
+	return !angular.isNumber(maxValue) ? ctrl.$viewValue : validate(ctrl, 'max', ctrl.$isEmpty(value) || value <= maxValue, value);
+});

@@ -1,3 +1,8 @@
+ /* global curry: true */
+ /* global numberValidator: true */
+ /* global minValidator: true */
+ /* global maxValidator: true */
+
 /**
  * @ngdoc directive
  * @name input[number]
@@ -57,96 +62,81 @@ angular
 
 	// Returns a function which formats the number with thousand-separators.
 	// Number -> (Number|String) -> String
-	var toFormattedNumber = curry(function (precision, number) {
-		return numberFilter(number, precision);
+	var toFormattedNumber = curry(function (ctrl, precision, number) {
+		return numberFilter(number || ctrl.$viewValue, precision());
 	});
 
 	// Converts given string or number to HTML5 compliant number.
 	// Number -> (String|Number) -> Number?
 	var toHtml5Number = curry(function (precision, value) {
-		if (typeof value !== 'string' && typeof value !== 'number') {
+		if (!angular.isString(value) && !angular.isNumber(value)) {
 			return null;
 		}
 
-		var number = parseFloat(numberFilter(value, precision).replace(/[,]/g, ''));
+		var number = parseFloat(numberFilter(value, precision()).replace(/[,]/g, ''));
 		return isFinite(number) ? number : null;
+	});
+
+	// Set $viewValue and $modelValue for a given NgModelContrller.
+	// NgModelController -> (Any -> Any) -> (Any -> Any) -> Event -> Any
+	var setModels = curry(function (ctrl, viewModelConverter, modelConverter, event) {
+		ctrl.$viewValue = angular.isFunction(viewModelConverter) ? viewModelConverter(ctrl.$modelValue) : ctrl.$viewValue;
+		ctrl.$modelValue = angular.isFunction(modelConverter) ? modelConverter(ctrl.$modelValue) : ctrl.$modelValue;
+		return ctrl.$render();
 	});
 
 	return {
 		restrict: 'E',
 		require: ['?ngModel'],
-		scope: {
-			min: '&min',
-			max: '&max',
-			precision: '&precision'
-		},
 		link: function (scope, element, attrs, ctrls) {
+			// TODO: throw error if input[type=number]
 			if (!ctrls || !('number' in attrs)) {
 				return;
 			}
 
-			// TODO: precision can be dynamic
-			var precision = scope.precision() || parseInt(attrs.precision, 10) || 0;
+			// NgModelController
 			var ctrl = ctrls[0];
 
+			// Remove any previous $parsers and $formatters
+			ctrl.$parsers = [];
+			ctrl.$formatters = [];
+
+			// Use to convert numbers for different views
+			var precision = function () { return scope.$eval(attrs.precision) || 0; };
+			var toDisplay = toFormattedNumber(ctrl, precision);
+			var toModel   = toHtml5Number(precision);
+			var validators = [
+				numberValidator(ctrl),
+				minValidator(ctrl, function () { return scope.$eval(attrs.min); }),
+				maxValidator(ctrl, function () { return scope.$eval(attrs.max); })
+			];
+
+			// HTML5 validators
+			angular.forEach(validators, function (validator) {
+				ctrl.$parsers.push(validator);
+			});
+
 			// When accessing the model value, always use the numeric value.
-			ctrl.$parsers.push(toHtml5Number(precision));
+			ctrl.$parsers.push(toModel);
 
 			// When displaying the value, always format it to currency format.
-			ctrl.$formatters.push(toFormattedNumber(precision));
+			ctrl.$formatters.push(toDisplay);
 
-			// Add HTML5 number validations:
-			// 	- number
-			// 	- min
-			// 	- max
-			ctrl.$parsers.push(curry(numberValidator)(ctrl));
-
-			/*
-			// Precision defaults to 0
-			var precision = scope.precision() || 0;
-			var min = scope.min() || parseFloat(attrs.min);
-			var max = scope.max() || parseFloat(attrs.max);
-
-			var toFormattedNumber = toFormattedNumberFn(precision);
-			var toHtml5Number = toHtml5NumberFn(precision);
-			var ctrl;
-
-			ctrl = ctrls[0];
-
-			// Add HTML5 style number validations.
-			ctrl.$parsers.push(numberValidator(ctrl));
-
-			// Add HTML5 min/max validations.
-			// TODO: make sure it evaluates expression dynamically.
-			if (typeof min === 'number' && isFinite(min)) {
-				console.log('min', min);
-				ctrl.$parsers.push(minValidator(ctrl, min));
-			}
-
-			if (typeof max === 'number' && isFinite(max)) {
-				console.log('max', max);
-				ctrl.$parsers.push(maxValidator(ctrl, max));
-			}
-			*/
-
+			// When input is focused, remove the number formatting and emulate
+			// number input.
 			element
+			.off(focusEvents)
+			.on(focusEvents, setModels(ctrl, toModel, undefined))
 			.on(focusEvents, function () {
-				// When focusing on the currency input field, change the format of the number to digits only.
-				ctrl.$viewValue = toHtml5Number(precision, ctrl.$modelValue);
-				ctrl.$render();
-
-				// On supported browsers, select the entire number so value can be replaced
-				// with minimum keyboard interaction.
-				return $timeout(function () { element.select(); }, 0);
+				return $timeout(function () { element.select(); }, 10);
 			})
-			.on(blurEvents, function () {
-				// When focus is taken away, i.e., blurred, format the number to currency and display it instead.
-				ctrl.$viewValue = toFormattedNumber(precision, ctrl.$modelValue);
-				ctrl.$modelValue = toHtml5Number(precision, ctrl.$modelValue);
-				return ctrl.$render();
-			})
+			// When input is blurred, show formatted number instead.
+			.off(blurEvents)
+			.on(blurEvents, setModels(ctrl, toDisplay, toModel))
+			// When element is about to be destroyed (angular) remove event
+			// bindings.
+			.off(destroyEvents)
 			.on(destroyEvents, function () {
-				// When element is about to be destroyed (angular) remove event bindings.
 				element
 				.off(focusEvents)
 				.off(blurEvents);
