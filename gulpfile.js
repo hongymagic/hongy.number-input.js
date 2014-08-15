@@ -7,8 +7,14 @@ gulp.task('test', function () {
 	return gulp.src(config.files)
 		.pipe(p.karma(fn.merge(config, { singleRun: true, action: 'run' })))
 		.on('error', function (err) {
-			p.util.log('error running tests', err);
+			p.util.log(err);
 		});
+});
+
+gulp.task('jshint', function () {
+	return gulp.src(['src/**/*.js'])
+		.pipe(p.jshint())
+		.pipe(p.jshint.reporter('jshint-stylish'));
 });
 
 gulp.task('script', function () {
@@ -21,11 +27,18 @@ gulp.task('script', function () {
 		])
 		.pipe(p.concat('hongy.input.js'))
 		.pipe(gulp.dest('./dist/'))
-		.pipe(p.jshint())
-		.pipe(p.jshint.reporter('jshint-stylish'))
 		.pipe(p.uglify())
 		.pipe(p.rename('hongy.input.min.js'))
-		.pipe(gulp.dest('./dist/'));
+		.pipe(gulp.dest('./dist/'))
+		.on('error', function () {});
 });
 
-gulp.task('default', ['script']);
+gulp.task('watch:test', function () {
+	p.watch({ glob: 'test/**/*.js' }, ['test']);
+});
+
+gulp.task('watch', function () {
+	p.watch({ glob: 'src/**/*.js' }, ['jshint', 'script'])
+});
+
+gulp.task('default', ['jshint', 'script']);
