@@ -27,8 +27,9 @@ var validate = curry(function (ctrl, name, validity, value) {
  * @param {any} value Value of the model.
  * @returns {any} Returns the valid value otherwise, undefined.
  */
-var numberValidator = curry(function (ctrl, value) {
-	return validate(ctrl, 'number', ctrl.$isEmpty(value) || NUMBER_REGEXP.test(value), value);
+var numberValidator = curry(function (ctrl, converter, value) {
+	var number = angular.isFunction(converter) ? converter(value) : value;
+	return validate(ctrl, 'number', ctrl.$isEmpty(value) || NUMBER_REGEXP.test(number), value);
 });
 
 /**
@@ -43,8 +44,8 @@ var numberValidator = curry(function (ctrl, value) {
  * @returns {any} Returns the valid value otherwise, undefined.
  */
 var minValidator = curry(function (ctrl, min, value) {
-	var minValue = min();
-	return !angular.isNumber(minValue) ? ctrl.$viewValue : validate(ctrl, 'min', ctrl.$isEmpty(value) || value >= minValue, value);
+	min = angular.isFunction(min) ? min() : min;
+	return !angular.isNumber(min) ? ctrl.$viewValue : validate(ctrl, 'min', ctrl.$isEmpty(value) || value >= min, value);
 });
 
 /**
@@ -58,6 +59,6 @@ var minValidator = curry(function (ctrl, min, value) {
  * @returns {any} Returns the valid value otherwise, undefined.
  */
 var maxValidator = curry(function (ctrl, max, value) {
-	var maxValue = max();
-	return !angular.isNumber(maxValue) ? ctrl.$viewValue : validate(ctrl, 'max', ctrl.$isEmpty(value) || value <= maxValue, value);
+	max = angular.isFunction(max) ? max() : max;
+	return !angular.isNumber(max) ? ctrl.$viewValue : validate(ctrl, 'max', ctrl.$isEmpty(value) || value <= max, value);
 });

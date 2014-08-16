@@ -5,7 +5,10 @@ describe('validations.js', function () {
 		min: function () { return 42; },
 		invalidMin: function () { return 'David'; },
 		max: function () { return 4242; },
-		invalidMax: function () { return []; }
+		invalidMax: function () { return []; },
+		converter: function () {
+			return 333;
+		}
 	};
 	var ctrl = {
 		$isEmpty: angular.noop,
@@ -45,20 +48,26 @@ describe('validations.js', function () {
 			expect(typeof numberValidator).toBe('function');
 		});
 
+		it('should call the converter when given', function () {
+			spyOn(helpers, 'converter');
+			numberValidator(ctrl, helpers.converter, '');
+			expect(helpers.converter).toHaveBeenCalled();
+		});
+
 		it('should check if empty before validating', function () {
-			numberValidator(ctrl, 0);
+			numberValidator(ctrl, null, 0);
 			expect(ctrl.$isEmpty).toHaveBeenCalledWith(0);
 		});
 
 		it('should call validate when called', function () {
-			numberValidator(ctrl, 0);
+			numberValidator(ctrl, null, 0);
 			expect(window.validate).toHaveBeenCalledWith(ctrl, 'number', true, 0);
 		});
 
 		it('should call validate with validity set to true when valid number is passed', function () {
 			var numbers = [-123123.9999, -123123, -0, +0, 123123, 123123.9999];
 			numbers.forEach(function (number) {
-				numberValidator(ctrl, number);
+				numberValidator(ctrl, null, number);
 				expect(window.validate).toHaveBeenCalledWith(ctrl, 'number', true, number);
 			});
 		});
@@ -66,7 +75,7 @@ describe('validations.js', function () {
 		it('should call validate with validity set to false when invalid number is passed', function () {
 			var numbers = [-Infinity, 'I am the best!', null, , {}, [], true, false, Infinity];
 			numbers.forEach(function (number) {
-				numberValidator(ctrl, number);
+				numberValidator(ctrl, null, number);
 				expect(window.validate).toHaveBeenCalledWith(ctrl, 'number', false, number);
 			});
 		});

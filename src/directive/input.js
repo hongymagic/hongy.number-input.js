@@ -61,9 +61,10 @@ angular
 	var destroyEvents = '$destroy';
 
 	// Returns a function which formats the number with thousand-separators.
+	// If given input is not a number, return it as-is.
 	// Number -> (Number|String) -> String
 	var toFormattedNumber = curry(function (ctrl, precision, number) {
-		return numberFilter(number || ctrl.$viewValue, precision());
+		return numberFilter(number || ctrl.$viewValue, precision()) || ctrl.$viewValue;
 	});
 
 	// Converts given string or number to HTML5 compliant number.
@@ -73,6 +74,10 @@ angular
 			return null;
 		}
 
+		if (angular.isString(value)) {
+			value = value.replace(/[,]/g, '');
+		}
+
 		var number = parseFloat(numberFilter(value, precision()).replace(/[,]/g, ''));
 		return isFinite(number) ? number : null;
 	});
@@ -80,8 +85,14 @@ angular
 	// Set $viewValue and $modelValue for a given NgModelContrller.
 	// NgModelController -> (Any -> Any) -> (Any -> Any) -> Event -> Any
 	var setModels = curry(function (ctrl, viewModelConverter, modelConverter, event) {
-		ctrl.$viewValue = angular.isFunction(viewModelConverter) ? viewModelConverter(ctrl.$modelValue) : ctrl.$viewValue;
-		ctrl.$modelValue = angular.isFunction(modelConverter) ? modelConverter(ctrl.$modelValue) : ctrl.$modelValue;
+		if (angular.isFunction(viewModelConverter)) {
+			ctrl.$viewValue = viewModelConverter(ctrl.$modelValue);
+		}
+
+		if (angular.isFunction(modelConverter)) {
+			ctrl.$modelValue = modelConverter(ctrl.$modelValue);
+		}
+
 		return ctrl.$render();
 	});
 
@@ -97,27 +108,34 @@ angular
 			// NgModelController
 			var ctrl = ctrls[0];
 
-			// Remove any previous $parsers and $formatters
-			ctrl.$parsers = [];
-			ctrl.$formatters = [];
-
 			// Use to convert numbers for different views
 			var precision = function () { return scope.$eval(attrs.precision) || 0; };
 			var toDisplay = toFormattedNumber(ctrl, precision);
 			var toModel   = toHtml5Number(precision);
 			var validators = [
-				numberValidator(ctrl),
 				minValidator(ctrl, function () { return scope.$eval(attrs.min); }),
 				maxValidator(ctrl, function () { return scope.$eval(attrs.max); })
 			];
+
+			// HTML5 number validator. Must be run before anything else.
+			ctrl.$parsers.push(numberValidator(ctrl, toModel));
+
+			// When accessing the model value, always use the numeric value.
+			ctrl.$parsers.push(toModel);
 
 			// HTML5 validators
 			angular.forEach(validators, function (validator) {
 				ctrl.$parsers.push(validator);
 			});
 
-			// When accessing the model value, always use the numeric value.
-			ctrl.$parsers.push(toModel);
+			// Watch for attribute changes and re-validate them
+			scope.$watch(attrs.max, function (max) {
+				maxValidator(ctrl, max, toModel(ctrl.$viewValue));
+			});
+
+			scope.$watch(attrs.min, function (min) {
+				minValidator(ctrl, min, toModel(ctrl.$viewValue));
+			});
 
 			// When displaying the value, always format it to currency format.
 			ctrl.$formatters.push(toDisplay);
