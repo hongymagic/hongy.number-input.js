@@ -1,6 +1,6 @@
 {
-  "name": "hongy-input",
-  "version": "1.0.2",
+  "name": "hongy.number-input",
+  "version": "1.2.0",
   "description": "Angular directive for formatting number input",
   "main": "dist/hongy.input.js",
   "directories": {
@@ -11,6 +11,7 @@
   },
   "keywords": [
     "angular",
+	"ng",
     "number",
     "input"
   ],
