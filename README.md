@@ -7,6 +7,21 @@ When editing, numbers are free of any formatting.
 Since HTML5 `input[type=number]` does not allow comma characters, we recommend
 that you use it with `type=tel` or `type=text`.
 
+## HTML5 Validation support
+
+Supports all standard HTML5 `input[type=number]` validations such as:
+
+* Number (according to [this floating point spec](http://www.w3.org/TR/html-markup/datatypes.html#common.data.float)
+* Mininum (use the `min` or `data-min` attribute)
+* Maximum (use the `max` or `data-max` attribute)
+
+## Extra attributes
+
+In addition to HTML5 number validation, there is one extra attribute:
+
+* Precision `data-precision=[number]`: set the precision of the floating point
+value. _Defaults to 0_.
+
 ## Demo
 
 ![in flight](https://raw.githubusercontent.com/hongymagic/hongy.number-input.js/master/demo.gif)
