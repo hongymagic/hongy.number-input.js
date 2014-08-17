@@ -41,4 +41,4 @@ gulp.task('watch', function () {
 	p.watch({ glob: 'src/**/*.js' }, ['jshint', 'script'])
 });
 
-gulp.task('default', ['jshint', 'script']);
+gulp.task('default', ['jshint', 'script', 'test']);
