@@ -36,6 +36,7 @@
 							<li ng-show="form.price.$error.min">Lower than the required minimum</li>
 							<li ng-show="form.price.$error.max">Higher than the required maximum</li>
 						</ul>
+						<span class="hint">Must be between $0 and $25,000,000</span>
 					</div>
 				</div>
 
@@ -61,6 +62,7 @@
 							<li ng-show="form.deposit.$error.min">Lower than the required minimum</li>
 							<li ng-show="form.deposit.$error.max">Higher than the property price</li>
 						</ul>
+						<span class="hint">Must be between $0 and the price of the property</span>
 					</div>
 			</fieldset>
 		</form>

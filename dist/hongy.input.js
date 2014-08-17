@@ -57,21 +57,6 @@ var NUMBER_REGEXP = /^\s*(\-|\+)?(\d+|(\d*(\.\d*)))\s*$/;
 
 /**
  * @description
- * Helper function to set the validity of NgModelController.
- *
- * @param {NgModelController} ctrl Controller of the bound model.
- * @param {string} name Name of the validation property.
- * @param {boolean} validity Boolean indicating if given value is valid.
- * @param {any} value Value of the model.
- * @returns {any} Returns the valid value otherwise, undefined.
- */
-var validate = curry(function (ctrl, name, validity, value) {
-	ctrl.$setValidity(name, validity);
-	return validity ? value : undefined;
-});
-
-/**
- * @description
  * Function to validate if given value is a number as per W3C HTML5 spec.
  * Internally sets the given NgModelController's validity.
  *
@@ -79,9 +64,8 @@ var validate = curry(function (ctrl, name, validity, value) {
  * @param {any} value Value of the model.
  * @returns {any} Returns the valid value otherwise, undefined.
  */
-var numberValidator = curry(function (ctrl, converter, value) {
-	var number = angular.isFunction(converter) ? converter(value) : value;
-	return validate(ctrl, 'number', ctrl.$isEmpty(value) || NUMBER_REGEXP.test(number), value);
+var numberValidator = curry(function (ctrl, value) {
+	return ctrl.$isEmpty(value) || NUMBER_REGEXP.test(value);
 });
 
 /**
@@ -97,7 +81,7 @@ var numberValidator = curry(function (ctrl, converter, value) {
  */
 var minValidator = curry(function (ctrl, min, value) {
 	min = angular.isFunction(min) ? min() : min;
-	return !angular.isNumber(min) ? ctrl.$viewValue : validate(ctrl, 'min', ctrl.$isEmpty(value) || value >= min, value);
+	return ctrl.$isEmpty(value) || value >= min;
 });
 
 /**
@@ -112,7 +96,7 @@ var minValidator = curry(function (ctrl, min, value) {
  */
 var maxValidator = curry(function (ctrl, max, value) {
 	max = angular.isFunction(max) ? max() : max;
-	return !angular.isNumber(max) ? ctrl.$viewValue : validate(ctrl, 'max', ctrl.$isEmpty(value) || value <= max, value);
+	return ctrl.$isEmpty(value) || value <= max;
 });
 
  /* global curry: true */
@@ -188,7 +172,7 @@ angular
 	// Number -> (String|Number) -> Number?
 	var toHtml5Number = curry(function (precision, value) {
 		if (!angular.isString(value) && !angular.isNumber(value)) {
-			return null;
+			return undefined;
 		}
 
 		if (angular.isString(value)) {
@@ -196,7 +180,7 @@ angular
 		}
 
 		var number = parseFloat(numberFilter(value, precision()).replace(/[,]/g, ''));
-		return isFinite(number) ? number : null;
+		return isFinite(number) ? number : undefined;
 	});
 
 	// Set $viewValue and $modelValue for a given NgModelContrller.
@@ -229,29 +213,22 @@ angular
 			var precision = function () { return scope.$eval(attrs.precision) || 0; };
 			var toDisplay = toFormattedNumber(ctrl, precision);
 			var toModel   = toHtml5Number(precision);
-			var validators = [
-				minValidator(ctrl, function () { return scope.$eval(attrs.min); }),
-				maxValidator(ctrl, function () { return scope.$eval(attrs.max); })
-			];
 
-			// HTML5 number validator. Must be run before anything else.
-			ctrl.$parsers.push(numberValidator(ctrl, toModel));
+			// HTML5 validators.
+			ctrl.$validators.number = numberValidator(ctrl);
+			ctrl.$validators.min = minValidator(ctrl, function () { return scope.$eval(attrs.min); });
+			ctrl.$validators.max = maxValidator(ctrl, function () { return scope.$eval(attrs.max); });
 
 			// When accessing the model value, always use the numeric value.
 			ctrl.$parsers.push(toModel);
 
-			// HTML5 validators
-			angular.forEach(validators, function (validator) {
-				ctrl.$parsers.push(validator);
-			});
-
 			// Watch for attribute changes and re-validate them
 			scope.$watch(attrs.max, function (max) {
-				maxValidator(ctrl, max, toModel(ctrl.$viewValue));
+				ctrl.$validate();
 			});
 
 			scope.$watch(attrs.min, function (min) {
-				minValidator(ctrl, min, toModel(ctrl.$viewValue));
+				ctrl.$validate();
 			});
 
 			// When displaying the value, always format it to currency format.

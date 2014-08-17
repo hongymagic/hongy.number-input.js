@@ -49,13 +49,13 @@ describe('input[number]', function () {
 
 	it('should set the model value to null when invalid input is entered', function () {
 		setPrice('');
-		expect(form.price.$modelValue).toBe(null);
+		expect(form.price.$modelValue).toBe(undefined);
 		setPrice('-=');
-		expect(form.price.$modelValue).toBe(null);
+		expect(form.price.$modelValue).toBe(undefined);
 		setPrice('!@#!%%');
-		expect(form.price.$modelValue).toBe(null);
+		expect(form.price.$modelValue).toBe(undefined);
 		setPrice('David');
-		expect(form.price.$modelValue).toBe(null);
+		expect(form.price.$modelValue).toBe(undefined);
 	});
 
 	describe('validations', function () {

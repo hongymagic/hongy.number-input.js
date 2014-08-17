@@ -71,7 +71,7 @@ angular
 	// Number -> (String|Number) -> Number?
 	var toHtml5Number = curry(function (precision, value) {
 		if (!angular.isString(value) && !angular.isNumber(value)) {
-			return null;
+			return undefined;
 		}
 
 		if (angular.isString(value)) {
@@ -79,7 +79,7 @@ angular
 		}
 
 		var number = parseFloat(numberFilter(value, precision()).replace(/[,]/g, ''));
-		return isFinite(number) ? number : null;
+		return isFinite(number) ? number : undefined;
 	});
 
 	// Set $viewValue and $modelValue for a given NgModelContrller.
@@ -112,29 +112,22 @@ angular
 			var precision = function () { return scope.$eval(attrs.precision) || 0; };
 			var toDisplay = toFormattedNumber(ctrl, precision);
 			var toModel   = toHtml5Number(precision);
-			var validators = [
-				minValidator(ctrl, function () { return scope.$eval(attrs.min); }),
-				maxValidator(ctrl, function () { return scope.$eval(attrs.max); })
-			];
 
-			// HTML5 number validator. Must be run before anything else.
-			ctrl.$parsers.push(numberValidator(ctrl, toModel));
+			// HTML5 validators.
+			ctrl.$validators.number = numberValidator(ctrl);
+			ctrl.$validators.min = minValidator(ctrl, function () { return scope.$eval(attrs.min); });
+			ctrl.$validators.max = maxValidator(ctrl, function () { return scope.$eval(attrs.max); });
 
 			// When accessing the model value, always use the numeric value.
 			ctrl.$parsers.push(toModel);
 
-			// HTML5 validators
-			angular.forEach(validators, function (validator) {
-				ctrl.$parsers.push(validator);
-			});
-
 			// Watch for attribute changes and re-validate them
 			scope.$watch(attrs.max, function (max) {
-				maxValidator(ctrl, max, toModel(ctrl.$viewValue));
+				ctrl.$validate();
 			});
 
 			scope.$watch(attrs.min, function (min) {
-				minValidator(ctrl, min, toModel(ctrl.$viewValue));
+				ctrl.$validate();
 			});
 
 			// When displaying the value, always format it to currency format.
