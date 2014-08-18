@@ -71,7 +71,7 @@ angular
 	// Number -> (String|Number) -> Number?
 	var toHtml5Number = curry(function (precision, value) {
 		if (!angular.isString(value) && !angular.isNumber(value)) {
-			return null;
+			return undefined;
 		}
 
 		if (angular.isString(value)) {
@@ -79,14 +79,14 @@ angular
 		}
 
 		var number = parseFloat(numberFilter(value, precision()).replace(/[,]/g, ''));
-		return isFinite(number) ? number : null;
+		return isFinite(number) ? number : undefined;
 	});
 
 	// Set $viewValue and $modelValue for a given NgModelContrller.
 	// NgModelController -> (Any -> Any) -> (Any -> Any) -> Event -> Any
 	var setModels = curry(function (ctrl, viewModelConverter, modelConverter, event) {
 		if (angular.isFunction(viewModelConverter)) {
-			ctrl.$viewValue = viewModelConverter(ctrl.$modelValue);
+			ctrl.$setViewValue(viewModelConverter(ctrl.$modelValue));
 		}
 
 		if (angular.isFunction(modelConverter)) {
@@ -144,9 +144,11 @@ angular
 			// number input.
 			element
 			.off(focusEvents)
-			.on(focusEvents, setModels(ctrl, toModel, undefined))
+			.on(focusEvents, setModels(ctrl, function (value) {
+				return toModel(value) || ctrl.$viewValue;
+			}, undefined))
 			.on(focusEvents, function () {
-				return $timeout(function () { element.select(); }, 10);
+				$timeout(function () { element.select(); });
 			})
 			// When input is blurred, show formatted number instead.
 			.off(blurEvents)
