@@ -1,7 +1,7 @@
 {
   "name": "hongy.number-input",
   "description": "Angular directive for formatting number input",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "authors": [
     "hongymagic <d.hong@me.com>"
   ],
